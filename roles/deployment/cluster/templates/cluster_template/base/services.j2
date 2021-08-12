@@ -1,5 +1,10 @@
 {% import 'cm_api.j2' as cm_api with context %}
 [
+  {%- if 'role_config_groups' in cluster and cluster.role_config_groups is iterable -%}
+    {%- set rcgs = cluster.role_config_groups -%}
+  {%- else -%}
+    {%- set rcgs = [] -%}
+  {%- endif -%}
   {%- set service_joiner = joiner(",") -%}
   {%- for service in cluster.services | difference(kms_services) -%}
   {%- set service_role_types = role_mappings[service] -%}
@@ -31,6 +36,21 @@
       }
       {%- endfor -%}
     {%- endif -%}
+    {%- for role_name in rcgs -%}
+      {%- if service == rcgs[role_name].service -%}
+        {%- set rcg_diplay_name = rcgs[role_name].display_name | default("") -%}
+        {%- set role_type = rcgs[role_name].role_type -%}
+        {%- set rcg_config = { service : { role_type : rcgs[role_name].configs } } -%}
+        {{ role_group_sep() }}
+        {
+          "refName": "{{ role_name }}",
+          "roleType": "{{ role_type }}",
+          {% set config_sep = joiner(",") -%}
+          "configs": {{ cm_api.ApiClusterTemplateConfigList(rcg_config, service, role_type, true) }},
+          "base": false
+        }
+      {%- endif -%}
+    {%- endfor -%}
     ]
   }
   {%- endfor -%}

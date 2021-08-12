@@ -19,6 +19,18 @@
   {%- endif -%}
 {%- endfor -%}
   ],
+  "roleConfigGroups" : [
+{%- set rcg_joiner = joiner(",") -%}
+{%- if 'role_config_groups' in cluster and cluster.role_config_groups is iterable -%}
+  {%- for rcg_name in cluster.role_config_groups -%}
+    {{ rcg_joiner() }}
+    {
+      "rcgRefName" : "{{ rcg_name }}",
+      "name" : "{{ cluster.role_config_groups[rcg_name].display_name | default("") }}"
+    }
+  {%- endfor -%}
+{%- endif -%}
+  ],
   "variables" : {%- include 'cluster_template/common/variables.j2' -%}{%- if cloudera_manager_version is version('6.2.0','>=') -%},
   "clusterSpec": {%- include 'cluster_template/common/clusterSpec.j2' -%}{%- endif -%}
   {%- if cluster.type | default('base') == 'base'

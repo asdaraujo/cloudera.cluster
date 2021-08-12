@@ -16,11 +16,16 @@
 
 - block:
     - set_fact:
+        rcg_query: "[?value.service==`{{ template.service }}`].key"
+
+    - set_fact:
         invalid_roles: >-
           {{
           template.roles
           | difference(role_mappings[template.service] | list)
+          | difference(cluster.role_config_groups | default({}) | dict2items | json_query(rcg_query) | list)
           }}
+
     - name: Ensure the host template service roles are valid
       assert:
         that: "{{ invalid_roles | length == 0 }}"

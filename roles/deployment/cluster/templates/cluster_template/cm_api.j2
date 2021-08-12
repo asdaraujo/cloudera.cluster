@@ -37,15 +37,19 @@
   {{ config | to_json }}
 {%- endmacro %}
 
-{% macro ApiClusterTemplateConfigList(service_merged_configs, service_type, role_type) -%}
+{% macro ApiClusterTemplateConfigList(service_merged_configs, service_type, role_type, use_value=false) -%}
   {%- set config_list = [] -%}
   {%- if service_type in service_merged_configs -%}
     {%- if service_merged_configs[service_type][role_type] is mapping -%}
       {%- for (k, v) in service_merged_configs[service_type][role_type].items() -%}
-        {%- if k.endswith("_service") and not "suppression" in k -%}
-          {%- set config = ApiClusterTemplateConfig(k, service_type, role_type, v, "ref") -%}
+        {%- if use_value -%}
+          {%- set config = ApiClusterTemplateConfig(k, service_type, role_type, v, "value") -%}
         {%- else -%}
-          {%- set config = ApiClusterTemplateConfig(k, service_type, role_type, v, "variable") -%}
+          {%- if k.endswith("_service") and not "suppression" in k -%}
+            {%- set config = ApiClusterTemplateConfig(k, service_type, role_type, v, "ref") -%}
+          {%- else -%}
+            {%- set config = ApiClusterTemplateConfig(k, service_type, role_type, v, "variable") -%}
+          {%- endif -%}
         {%- endif -%}
         {{ config_list.append(config | from_json) }}
       {%- endfor -%}

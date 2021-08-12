@@ -9,13 +9,19 @@
     {%- if service in kms_services -%}
       {{ filtered_services.append(service) }}
     {%- else -%}
+      {%- set service_role_types = role_mappings[service] -%}
       {%- set service_ref = service | lower -%}
       {%- if (cluster.security.kerberos | default(false) and service == "HUE"
             and "HUE_SERVER" in roles and not "KT_RENEWER" in roles) -%}
         {{ roles.append("KT_RENEWER") }}
       {%- endif -%}
       {%- for role in roles -%}
-        {{ role_config_group_refs.append("{}-{}-BASE".format(service_ref, role)) }}
+        {%- if role in service_role_types -%}
+          {%- set rcg_name = "{}-{}-BASE".format(service_ref, role) -%}
+        {%- else -%}
+          {%- set rcg_name = role -%}
+        {%- endif -%}
+        {{ role_config_group_refs.append(rcg_name) }}
       {%- endfor -%}
     {%- endif -%}
   {%- endfor -%}
